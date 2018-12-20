@@ -113,13 +113,9 @@ class LivySession(ObjectWithGuid):
     def _translate_to_livy_kind(self, properties, kind):
         # Livy does not support "pyspark3" as the kind from 0.4 onwards and only "pyspark" is valid.
         # That's why we are leveraging PYSPARK_PYTHON_PARAM here to specifyf different python versions.
-        if kind in [constants.SESSION_KIND_PYSPARK, constants.SESSION_KIND_PYSPARK3] and not constants.LIVY_CONF_PARAM in properties:
-            properties[constants.LIVY_CONF_PARAM] = dict()
-        if kind == constants.SESSION_KIND_PYSPARK:
-            properties[constants.LIVY_CONF_PARAM][constants.PYSPARK_PYTHON_PARAM] = constants.LANG_PYTHON
-        elif kind == constants.SESSION_KIND_PYSPARK3:
+        # NOTE: Leveraging PYSPARK_PYTHON_PARAM doesn't work in dataproc - worker nodes have their yarn processes start BEFORE conda initialization happens. This means they use python / python3 from /usr/bin instead of /opt/conda/bin. This causes a 'Different python version error' on the workers. So for now just using pyspark instead of pyspark3 - not using any other overrides from the fix.
+        if kind == constants.SESSION_KIND_PYSPARK3:
             properties[constants.LIVY_KIND_PARAM] = constants.SESSION_KIND_PYSPARK
-            properties[constants.LIVY_CONF_PARAM][constants.PYSPARK_PYTHON_PARAM] = constants.LANG_PYTHON3
 
     def start(self):
         """Start the session against actual livy server."""
